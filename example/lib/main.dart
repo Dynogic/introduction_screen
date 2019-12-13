@@ -50,6 +50,19 @@ class OnBoardingPage extends StatelessWidget {
     return IntroductionScreen(
       pages: [
         PageViewModel(
+          child: ListView(
+            children: <Widget>[
+              SizedBox(height: 1000),
+              Text(
+                'This is a scrollable test',
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 20),
+            ],
+          ),
+           decoration: pageDecoration,
+        ),
+        PageViewModel(
           title: "Fractional shares",
           body:
               "Instead of having to buy an entire share, invest any amount you want.",

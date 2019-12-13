@@ -25,6 +25,8 @@ class PageViewModel {
   /// Contain all page customizations, like page color, text styles
   final PageDecoration decoration;
 
+  final Widget child;
+
   PageViewModel({
     this.title,
     this.titleWidget,
@@ -33,20 +35,26 @@ class PageViewModel {
     this.image,
     this.footer,
     this.decoration = const PageDecoration(),
-  })  : assert(
-          title != null || titleWidget != null,
-          "You must provide either title (String) or titleWidget (Widget).",
-        ),
-        assert(
-          (title == null) != (titleWidget == null),
-          "You can not provide both title and titleWidget.",
-        ),
-        assert(
-          body != null || bodyWidget != null,
-          "You must provide either body (String) or bodyWidget (Widget).",
-        ),
-        assert(
-          (body == null) != (bodyWidget == null),
-          "You can not provide both body and bodyWidget.",
-        );
+    this.child,
+  }) {
+    if (child != null) {
+      return;
+    }
+    assert(
+      title != null || titleWidget != null,
+      "You must provide either title (String) or titleWidget (Widget).",
+    );
+    assert(
+      (title == null) != (titleWidget == null),
+      "You can not provide both title and titleWidget.",
+    );
+    assert(
+      body != null || bodyWidget != null,
+      "You must provide either body (String) or bodyWidget (Widget).",
+    );
+    assert(
+      (body == null) != (bodyWidget == null),
+      "You can not provide both body and bodyWidget.",
+    );
+  }
 }
