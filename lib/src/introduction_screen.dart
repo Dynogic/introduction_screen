@@ -159,12 +159,6 @@ class _IntroductionScreenState extends State<IntroductionScreen> {
     setState(() => _isScrolling = false);
   }
 
-  bool _onScroll(ScrollNotification notification) {
-    final PageMetrics metrics = notification.metrics;
-    setState(() => _currentPage = metrics.page);
-    return false;
-  }
-
   @override
   Widget build(BuildContext context) {
     final isLastPage = (_currentPage.round() == widget.pages.length - 1);
@@ -187,55 +181,51 @@ class _IntroductionScreenState extends State<IntroductionScreen> {
 
     return Scaffold(
       backgroundColor: widget.globalBackgroundColor,
-      body: Stack(
+      body: Column(
         children: [
-          NotificationListener<ScrollNotification>(
-            onNotification: _onScroll,
+          Expanded(
             child: PageView(
               controller: _pageController,
               physics: widget.freeze
                   ? const NeverScrollableScrollPhysics()
                   : const BouncingScrollPhysics(),
               children: widget.pages.map((p) => IntroPage(page: p)).toList(),
-              onPageChanged: widget.onChange,
+              onPageChanged: (index) {
+                setState(() => _currentPage = index.toDouble());
+                if (widget.onChange != null) {
+                  widget.onChange(index);
+                }
+              },
             ),
           ),
-          Positioned(
-            bottom: 16.0,
-            left: 16.0,
-            right: 16.0,
-            child: SafeArea(
-              child: Row(
-                children: [
-                  Expanded(
-                    flex: widget.skipFlex,
-                    child: isSkipBtn
-                        ? skipBtn
-                        : Opacity(opacity: 0.0, child: skipBtn),
-                  ),
-                  Expanded(
-                    flex: widget.dotsFlex,
-                    child: Center(
-                      child: widget.isProgress
-                          ? DotsIndicator(
-                              dotsCount: widget.pages.length,
-                              position: _currentPage,
-                              decorator: widget.dotsDecorator,
-                            )
-                          : const SizedBox(),
-                    ),
-                  ),
-                  Expanded(
-                    flex: widget.nextFlex,
-                    child: isLastPage
-                        ? doneBtn
-                        : widget.showNextButton
-                            ? nextBtn
-                            : Opacity(opacity: 0.0, child: nextBtn),
-                  ),
-                ],
+          Row(
+            children: [
+              Expanded(
+                flex: widget.skipFlex,
+                child:
+                    isSkipBtn ? skipBtn : Opacity(opacity: 0.0, child: skipBtn),
               ),
-            ),
+              Expanded(
+                flex: widget.dotsFlex,
+                child: Center(
+                  child: widget.isProgress
+                      ? DotsIndicator(
+                          dotsCount: widget.pages.length,
+                          position: _currentPage,
+                          decorator: widget.dotsDecorator,
+                        )
+                      : const SizedBox(),
+                ),
+              ),
+              Expanded(
+                flex: widget.nextFlex,
+                child: isLastPage
+                    ? doneBtn
+                    : widget.showNextButton
+                        ? nextBtn
+                        : Opacity(opacity: 0.0, child: nextBtn),
+              ),
+            ],
           ),
         ],
       ),
