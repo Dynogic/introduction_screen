@@ -16,6 +16,8 @@ class IntroductionScreen extends StatefulWidget {
   /// Callback when Done button is pressed
   final VoidCallback onDone;
 
+  final Future<bool> Function() onIntroPressedOverride;
+
   /// Done button
   final Widget done;
 
@@ -30,6 +32,8 @@ class IntroductionScreen extends StatefulWidget {
 
   /// Next button
   final Widget next;
+
+  final Widget prev;
 
   /// Is the Skip button should be display
   ///
@@ -62,6 +66,8 @@ class IntroductionScreen extends StatefulWidget {
   /// @Default `350`
   final int animationDuration;
 
+  final int prevAnimationDuration;
+
   /// Index of the initial page
   ///
   /// @Default `0`
@@ -71,6 +77,8 @@ class IntroductionScreen extends StatefulWidget {
   ///
   /// @Default `1`
   final int skipFlex;
+
+  final int prevFlex;
 
   /// Flex ratio of the progress indicator
   ///
@@ -96,6 +104,7 @@ class IntroductionScreen extends StatefulWidget {
     this.onChange,
     this.skip,
     this.next,
+    this.prev,
     this.showSkipButton = false,
     this.showNextButton = true,
     this.isProgress = true,
@@ -103,10 +112,13 @@ class IntroductionScreen extends StatefulWidget {
     this.globalBackgroundColor,
     this.dotsDecorator = const DotsDecorator(),
     this.animationDuration = 350,
+    this.prevAnimationDuration = 350,
+    this.onIntroPressedOverride,
     this.initialPage = 0,
     this.skipFlex = 1,
     this.dotsFlex = 1,
     this.nextFlex = 1,
+    this.prevFlex = 1,
     this.curve = Curves.easeIn,
   })  : assert(pages != null),
         assert(
@@ -138,22 +150,28 @@ class _IntroductionScreenState extends State<IntroductionScreen> {
   }
 
   void _onNext() {
-    animateScroll(min(_currentPage.round() + 1, widget.pages.length - 1));
+    animateScroll(min(_currentPage.round() + 1, widget.pages.length - 1),
+        widget.animationDuration);
+  }
+
+  void _onPrev() {
+    animateScroll(
+        max(_currentPage.round() - 1, 0), widget.prevAnimationDuration);
   }
 
   Future<void> _onSkip() async {
     if (widget.onSkip != null) return widget.onSkip();
 
     setState(() => _isSkipPressed = true);
-    await animateScroll(widget.pages.length - 1);
+    await animateScroll(widget.pages.length - 1, widget.animationDuration);
     setState(() => _isSkipPressed = false);
   }
 
-  Future<void> animateScroll(int page) async {
+  Future<void> animateScroll(int page, [int duration = 350]) async {
     setState(() => _isScrolling = true);
     await _pageController.animateToPage(
       page,
-      duration: Duration(milliseconds: widget.animationDuration),
+      duration: Duration(milliseconds: duration),
       curve: widget.curve,
     );
     setState(() => _isScrolling = false);
@@ -164,6 +182,11 @@ class _IntroductionScreenState extends State<IntroductionScreen> {
     final isLastPage = (_currentPage.round() == widget.pages.length - 1);
     bool isSkipBtn = (!_isSkipPressed && !isLastPage && widget.showSkipButton);
 
+    final prevBtn = IntroButton(
+      child: widget.prev,
+      onPressed: _onPrev,
+    );
+
     final skipBtn = IntroButton(
       child: widget.skip,
       onPressed: isSkipBtn ? _onSkip : null,
@@ -171,12 +194,32 @@ class _IntroductionScreenState extends State<IntroductionScreen> {
 
     final nextBtn = IntroButton(
       child: widget.next,
-      onPressed: widget.showNextButton && !_isScrolling ? _onNext : null,
+      onPressed: widget.showNextButton && !_isScrolling
+          ? () async {
+              if (widget.onIntroPressedOverride != null) {
+                final result = await widget.onIntroPressedOverride();
+                if (result == true) {
+                  _onNext();
+                }
+              } else {
+                _onNext();
+              }
+            }
+          : null,
     );
 
     final doneBtn = IntroButton(
       child: widget.done,
-      onPressed: widget.onDone,
+      onPressed: () async {
+        if (widget.onIntroPressedOverride != null) {
+          final result = await widget.onIntroPressedOverride();
+          if (result == true) {
+            widget.onDone();
+          }
+        } else {
+          widget.onDone();
+        }
+      },
     );
 
     return Scaffold(
@@ -200,10 +243,14 @@ class _IntroductionScreenState extends State<IntroductionScreen> {
           ),
           Row(
             children: [
+              // Expanded(
+              //   flex: widget.skipFlex,
+              //   child:
+              //       isSkipBtn ? skipBtn : Opacity(opacity: 0.0, child: skipBtn),
+              // ),
               Expanded(
-                flex: widget.skipFlex,
-                child:
-                    isSkipBtn ? skipBtn : Opacity(opacity: 0.0, child: skipBtn),
+                flex: widget.prevFlex,
+                child: prevBtn,
               ),
               Expanded(
                 flex: widget.dotsFlex,
